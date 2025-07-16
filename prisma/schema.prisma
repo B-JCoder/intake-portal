@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  clerkId     String        @unique
+  firstName   String?
+  lastName    String?
+  role        UserRole      @default(USER)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  projectForms ProjectForm[]
+  
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ProjectStatus {
+  DRAFT
+  SUBMITTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WebsiteType {
+  BUSINESS
+  ECOMMERCE
+  PORTFOLIO
+  BLOG
+  CUSTOM
+}
+
+model ProjectForm {
+  id            String   @id @default(cuid())
+  businessName  String
+  industry      String?
+  websiteType   String
+  features      String[]
+  numberOfPages Int
+  deadline      DateTime
+  budget        Int
+  estimatedCost Int      
+  userId        String
+  status        String   @default("SUBMITTED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  projectFormId   String
+  amount          Float
+  status          PaymentStatus @default(PENDING)
+  paymentIntentId String?       @unique
+  stripeSessionId String?
+  paymentType     String        @default("full") // "full" or "deposit"
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  projectForm     ProjectForm   @relation(fields: [projectFormId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
